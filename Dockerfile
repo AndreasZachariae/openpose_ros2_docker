@@ -4,7 +4,7 @@
 # FROM cwaffles/openpose
 # https://hub.docker.com/r/cwaffles/openpose
 
-FROM nvidia/cuda:11.4.0-cudnn8-devel-ubuntu18.04
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 
 ##############################################################################
 ##                                 OpenPose                                 ##
@@ -27,12 +27,12 @@ ENV PATH="/opt/cmake-3.16.0-Linux-x86_64/bin:${PATH}"
 #get openpose
 WORKDIR /openpose
 RUN git clone https://github.com/CMU-Perceptual-Computing-Lab/openpose.git .
+RUN git checkout 254570d
 
 #build it
 WORKDIR /openpose/build
 RUN cmake -DBUILD_PYTHON=ON .. && make -j `nproc`
 RUN make install
-# WORKDIR /openpose
 
 ##############################################################################
 ##                        Install ROS2 & dependencies                       ##
@@ -120,8 +120,10 @@ RUN echo "set -e" >> ros_entrypoint.sh
 RUN echo "# setup ros environment" >> ros_entrypoint.sh
 RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ros_entrypoint.sh
 RUN echo "source /home/$USER/ros2_ws/install/setup.bash" >> ros_entrypoint.sh
+RUN echo "sudo ldconfig" >> ros_entrypoint.sh
 RUN echo "exec \$@" >> ros_entrypoint.sh
 RUN sudo mv ros_entrypoint.sh /
 ENTRYPOINT ["/ros_entrypoint.sh"]
 
-CMD /bin/bash
+# CMD /bin/bash
+CMD ["ros2", "launch", "openpose_ros", "openpose_ros.launch.py"]
